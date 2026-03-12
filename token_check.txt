@@ -1,0 +1,3 @@
+﻿=== Checking token validity ===
+Status: 401
+Token invalid: {"error":"Invalid username or password."}

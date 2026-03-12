@@ -1,0 +1,37 @@
+[
+  {
+    "model": "mistralai/Mistral-7B-Instruct-v0.3",
+    "status": 403,
+    "body": "{\"error\":\"This authentication method does not have sufficient permissions to call Inference Providers on behalf of user varshikagoud23\"}"
+  },
+  {
+    "model": "HuggingFaceH4/zephyr-7b-beta",
+    "status": 403,
+    "body": "{\"error\":\"This authentication method does not have sufficient permissions to call Inference Providers on behalf of user varshikagoud23\"}"
+  },
+  {
+    "model": "google/gemma-2-2b-it",
+    "status": 403,
+    "body": "{\"error\":\"This authentication method does not have sufficient permissions to call Inference Providers on behalf of user varshikagoud23\"}"
+  },
+  {
+    "model": "Qwen/Qwen2.5-7B-Instruct",
+    "status": 403,
+    "body": "{\"error\":\"This authentication method does not have sufficient permissions to call Inference Providers on behalf of user varshikagoud23\"}"
+  },
+  {
+    "model": "meta-llama/Meta-Llama-3-8B-Instruct",
+    "status": 403,
+    "body": "{\"error\":\"This authentication method does not have sufficient permissions to call Inference Providers on behalf of user varshikagoud23\"}"
+  },
+  {
+    "model": "microsoft/Phi-3-mini-4k-instruct",
+    "status": 403,
+    "body": "{\"error\":\"This authentication method does not have sufficient permissions to call Inference Providers on behalf of user varshikagoud23\"}"
+  },
+  {
+    "model": "tiiuae/falcon-7b-instruct",
+    "status": 403,
+    "body": "{\"error\":\"This authentication method does not have sufficient permissions to call Inference Providers on behalf of user varshikagoud23\"}"
+  }
+]

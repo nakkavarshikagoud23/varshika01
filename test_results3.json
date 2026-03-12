@@ -1,0 +1,27 @@
+[
+  {
+    "model": "HuggingFaceH4/zephyr-7b-beta",
+    "status": "ERROR",
+    "output": "Model HuggingFaceH4/zephyr-7b-beta is not supported for task text-generation and provider featherless-ai. Supported task: conversational."
+  },
+  {
+    "model": "mistralai/Mistral-7B-Instruct-v0.3",
+    "status": "ERROR",
+    "output": "Model mistralai/Mistral-7B-Instruct-v0.3 is not supported for task text-generation and provider novita. Supported task: conversational."
+  },
+  {
+    "model": "google/gemma-2-2b-it",
+    "status": "ERROR",
+    "output": ""
+  },
+  {
+    "model": "tiiuae/falcon-7b-instruct",
+    "status": "ERROR",
+    "output": ""
+  },
+  {
+    "model": "chat_completion/zephyr",
+    "status": "ERROR",
+    "output": "(Request ID: Root=1-69b130f5-0b09be6c35c15afb23e63e60;82937985-f159-4b54-b638-d531acacef39)\n\n403 Forbidden: This authentication method does not have sufficient permissions to call Inference Providers on behalf of user varshikagoud23.\nCannot access content at: https://router.huggingface.co/v1/chat/co"
+  }
+]
