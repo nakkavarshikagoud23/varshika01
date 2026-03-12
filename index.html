@@ -1,0 +1,659 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StyleSense - AI Fashion Recommendations</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --bg-card: rgba(255,255,255,0.85);
+            --bg-card-inner: rgba(248,249,250,0.9);
+            --text-primary: #333;
+            --text-secondary: #555;
+            --text-muted: #666;
+            --border-color: #e0e0e0;
+            --accent: #764ba2;
+            --accent-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --shadow: 0 8px 32px rgba(0,0,0,0.15);
+            --glass-blur: blur(12px);
+        }
+        [data-theme="dark"] {
+            --bg-primary: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            --bg-card: rgba(30,30,50,0.85);
+            --bg-card-inner: rgba(40,40,65,0.9);
+            --text-primary: #e8e8f0;
+            --text-secondary: #b0b0c8;
+            --text-muted: #9898b0;
+            --border-color: #3a3a5c;
+            --accent: #a78bfa;
+            --accent-gradient: linear-gradient(135deg, #667eea 0%, #a78bfa 100%);
+            --shadow: 0 8px 32px rgba(0,0,0,0.4);
+        }
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body {
+            font-family: 'Inter', 'Segoe UI', sans-serif;
+            background: var(--bg-primary);
+            background-attachment: fixed;
+            min-height: 100vh;
+            color: var(--text-primary);
+            transition: background 0.4s, color 0.4s;
+        }
+        .container { max-width:1300px; margin:0 auto; padding:20px; }
+        header {
+            text-align:center; padding:25px 0; color:white;
+            display:flex; justify-content:center; align-items:center; flex-direction:column; position:relative;
+        }
+        h1 { font-size:2.8em; font-weight:700; text-shadow:2px 2px 8px rgba(0,0,0,0.3); letter-spacing:-0.5px; }
+        .tagline { font-size:1.1em; opacity:0.9; margin-top:5px; font-weight:300; }
+        .header-controls {
+            position:absolute; right:0; top:50%; transform:translateY(-50%);
+            display:flex; gap:10px; align-items:center;
+        }
+        .theme-toggle {
+            background: rgba(255,255,255,0.2); border:none; color:white; font-size:22px;
+            width:44px; height:44px; border-radius:50%; cursor:pointer;
+            backdrop-filter: blur(10px); transition: all 0.3s;
+            display:flex; align-items:center; justify-content:center;
+        }
+        .theme-toggle:hover { background:rgba(255,255,255,0.35); transform:scale(1.1); }
+        .header-btn {
+            background:rgba(255,255,255,0.2); border:none; color:white; padding:10px 20px;
+            border-radius:25px; cursor:pointer; font-size:14px; font-weight:600;
+            backdrop-filter:blur(10px); transition:all 0.3s; font-family:'Inter',sans-serif;
+        }
+        .header-btn:hover { background:rgba(255,255,255,0.35); transform:translateY(-1px); }
+        .api-key-banner {
+            background:rgba(255,243,205,0.9); border:1px solid #ffc107; border-radius:12px;
+            padding:12px 20px; margin-bottom:20px; display:flex; align-items:center;
+            gap:12px; flex-wrap:wrap; backdrop-filter:var(--glass-blur);
+        }
+        .api-key-banner.success { background:rgba(212,237,218,0.9); border-color:#28a745; }
+        .api-key-banner label { font-weight:600; white-space:nowrap; color:#333; }
+        .api-key-banner input {
+            flex:1; min-width:180px; padding:8px 12px; border:2px solid #ddd;
+            border-radius:8px; font-size:14px; font-family:'Inter',sans-serif;
+        }
+        .api-key-banner button {
+            padding:8px 18px; background:var(--accent); color:white; border:none;
+            border-radius:8px; cursor:pointer; font-weight:600; font-family:'Inter',sans-serif;
+        }
+        .api-key-banner a { color:var(--accent); font-weight:600; }
+        .main-content { display:grid; grid-template-columns:1fr 1fr; gap:25px; margin-top:20px; }
+        .card {
+            background:var(--bg-card); border-radius:20px; padding:28px;
+            box-shadow:var(--shadow); backdrop-filter:var(--glass-blur);
+            border:1px solid rgba(255,255,255,0.18); transition:all 0.4s;
+        }
+        .card-title { font-size:1.4em; margin-bottom:18px; color:var(--accent); font-weight:700; }
+        .input-group { margin-bottom:16px; }
+        .input-row { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+        label { display:block; margin-bottom:6px; font-weight:600; color:var(--text-secondary); font-size:0.9em; }
+        input[type="text"], select, textarea {
+            width:100%; padding:11px 14px; border:2px solid var(--border-color);
+            border-radius:10px; font-size:15px; transition:all 0.3s;
+            background:var(--bg-card-inner); color:var(--text-primary); font-family:'Inter',sans-serif;
+        }
+        input[type="text"]:focus, select:focus, textarea:focus { outline:none; border-color:#667eea; box-shadow:0 0 0 3px rgba(102,126,234,0.15); }
+        textarea { resize:vertical; min-height:70px; }
+        .mood-input { position:relative; }
+        .mood-input input { padding-left:36px; }
+        .mood-input .mood-icon { position:absolute; left:12px; top:38px; font-size:18px; }
+        .file-upload { position:relative; display:inline-block; width:100%; }
+        .file-upload input[type="file"] { position:absolute; opacity:0; width:100%; height:100%; cursor:pointer; }
+        .file-upload-label {
+            display:block; padding:28px; background:var(--bg-card-inner); border:3px dashed var(--border-color);
+            border-radius:12px; text-align:center; cursor:pointer; transition:all 0.3s; font-size:0.95em;
+        }
+        .file-upload-label:hover { border-color:#667eea; background:rgba(102,126,234,0.05); }
+        .image-preview { margin-top:12px; text-align:center; }
+        .image-preview img { max-width:100%; max-height:200px; border-radius:12px; box-shadow:0 4px 12px rgba(0,0,0,0.1); }
+        .btn-row { display:flex; gap:10px; flex-wrap:wrap; margin-top:5px; }
+        .btn {
+            background:var(--accent-gradient); color:white; padding:12px 28px; border:none;
+            border-radius:25px; font-size:15px; font-weight:600; cursor:pointer;
+            transition:all 0.3s; display:inline-flex; align-items:center; gap:6px; font-family:'Inter',sans-serif;
+        }
+        .btn:hover { transform:translateY(-2px); box-shadow:0 6px 20px rgba(102,126,234,0.4); }
+        .btn:disabled { opacity:0.6; cursor:not-allowed; transform:none; }
+        .btn-outline {
+            background:transparent; color:var(--accent); border:2px solid var(--accent);
+            padding:10px 20px; border-radius:25px; font-size:14px; font-weight:600;
+            cursor:pointer; transition:all 0.3s; font-family:'Inter',sans-serif;
+        }
+        .btn-outline:hover { background:var(--accent); color:white; }
+        .recommendations { margin-top:20px; }
+        .recommendation-card {
+            background:var(--bg-card-inner); padding:18px; border-radius:12px;
+            margin-bottom:12px; animation:slideIn 0.5s ease-out;
+            border-left:4px solid var(--accent); transition:all 0.3s;
+        }
+        .recommendation-card:hover { transform:translateX(4px); }
+        @keyframes slideIn { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
+        @keyframes fadeIn { from{opacity:0} to{opacity:1} }
+        .recommendation-title { font-size:1.1em; color:var(--accent); margin-bottom:8px; font-weight:700; }
+        .recommendation-text { color:var(--text-muted); line-height:1.7; font-size:0.95em; }
+        .trend-tags { display:flex; flex-wrap:wrap; gap:8px; margin-top:12px; }
+        .tag { background:var(--accent-gradient); color:white; padding:5px 14px; border-radius:20px; font-size:13px; font-weight:500; }
+        .loading { text-align:center; padding:40px; }
+        .spinner {
+            border:4px solid var(--border-color); border-top:4px solid var(--accent);
+            border-radius:50%; width:45px; height:45px; animation:spin 0.8s linear infinite; margin:0 auto 15px;
+        }
+        @keyframes spin { 0%{transform:rotate(0)} 100%{transform:rotate(360deg)} }
+        .modal-overlay {
+            display:none; position:fixed; top:0; left:0; width:100%; height:100%;
+            background:rgba(0,0,0,0.5); backdrop-filter:blur(4px); z-index:1000;
+            justify-content:center; align-items:center; animation:fadeIn 0.2s;
+        }
+        .modal-overlay.active { display:flex; }
+        .modal {
+            background:var(--bg-card); border-radius:20px; padding:30px; max-width:650px;
+            width:90%; max-height:80vh; overflow-y:auto; box-shadow:var(--shadow);
+            backdrop-filter:var(--glass-blur); border:1px solid rgba(255,255,255,0.18);
+        }
+        .modal-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; }
+        .modal-header h2 { font-size:1.4em; color:var(--accent); }
+        .modal-close { background:none; border:none; font-size:24px; cursor:pointer; color:var(--text-muted); transition:color 0.3s; }
+        .modal-close:hover { color:var(--accent); }
+        .history-item {
+            background:var(--bg-card-inner); border-radius:10px; padding:14px;
+            margin-bottom:10px; cursor:pointer; transition:all 0.3s; border-left:3px solid var(--accent);
+        }
+        .history-item:hover { transform:translateX(4px); box-shadow:0 2px 8px rgba(0,0,0,0.1); }
+        .history-item .h-title { font-weight:600; color:var(--text-primary); font-size:0.95em; }
+        .history-item .h-date { font-size:0.8em; color:var(--text-muted); margin-top:4px; }
+        .history-item .h-tags { display:flex; gap:6px; margin-top:6px; flex-wrap:wrap; }
+        .history-item .h-tag { font-size:11px; background:var(--accent); color:white; padding:2px 8px; border-radius:10px; }
+        .history-empty { text-align:center; color:var(--text-muted); padding:30px; font-size:0.95em; }
+        .toast {
+            position:fixed; bottom:30px; right:30px; background:var(--accent);
+            color:white; padding:14px 24px; border-radius:12px; font-weight:600;
+            z-index:2000; animation:slideIn 0.3s; box-shadow:0 4px 15px rgba(0,0,0,0.2);
+        }
+        .recommendation-image {
+            width: 100%;
+            height: 400px;
+            object-fit: cover;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+            border: 1px solid rgba(255,255,255,0.1);
+            background: #eee;
+        }
+        .image-loading-placeholder {
+            width: 100%;
+            height: 400px;
+            background: var(--bg-card-inner);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            flex-direction: column;
+            gap: 15px;
+        }
+        @media (max-width:768px) {
+            .main-content { grid-template-columns:1fr; }
+            .input-row { grid-template-columns:1fr; }
+            .header-controls { position:static; transform:none; margin-top:12px; }
+            h1 { font-size:2em; }
+            .recommendation-image { height: 300px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>&#10024; StyleSense</h1>
+            <p class="tagline">AI-Powered Fashion Recommendations &amp; Styling Assistant</p>
+            <div class="header-controls">
+                <button class="header-btn" onclick="showTrends()">&#128200; Trends</button>
+                <button class="header-btn" onclick="showHistory()">&#128220; History</button>
+                <button class="theme-toggle" onclick="toggleTheme()" id="theme-btn" title="Toggle Dark Mode">&#127769;</button>
+            </div>
+        </header>
+
+        <div id="api-key-section" class="api-key-banner">
+            <label>&#128273; Gemini API Key:</label>
+            <input type="password" id="api-key-input" placeholder="Paste your Gemini API key here...">
+            <button onclick="saveApiKey()">Save Key</button>
+            <small>Get a free key at <a href="https://aistudio.google.com/apikey" target="_blank">aistudio.google.com/apikey</a></small>
+        </div>
+        
+        <div id="hf-api-key-section" class="api-key-banner" style="background:rgba(230,240,255,0.9); border-color:#667eea;">
+            <label>&#128396;&#65039; Hugging Face Token (For Images):</label>
+            <input type="password" id="hf-api-key-input" placeholder="Paste your Hugging Face Access Token...">
+            <button onclick="saveHfApiKey()" style="background:#667eea;">Save Key</button>
+            <small>Get a free token at <a href="https://huggingface.co/settings/tokens" target="_blank">huggingface.co/settings/tokens</a></small>
+        </div>
+
+        <div class="main-content">
+            <div class="card">
+                <h2 class="card-title">&#128248; Upload Your Style</h2>
+                <div class="input-row">
+                    <div class="input-group">
+                        <label for="gender">Gender</label>
+                        <select id="gender">
+                            <option value="female">Female</option>
+                            <option value="male">Male</option>
+                            <option value="non-binary">Non-binary</option>
+                            <option value="prefer-not-to-say">Prefer not to say</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <label for="body-type">Body Type</label>
+                        <select id="body-type">
+                            <option value="any">Any</option>
+                            <option value="slim">Slim</option>
+                            <option value="athletic">Athletic</option>
+                            <option value="curvy">Curvy</option>
+                            <option value="plus-size">Plus Size</option>
+                            <option value="petite">Petite</option>
+                            <option value="tall">Tall</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="input-row">
+                    <div class="input-group">
+                        <label for="style-preference">Style Preference</label>
+                        <select id="style-preference">
+                            <option value="casual">Casual</option>
+                            <option value="formal">Formal</option>
+                            <option value="business">Business</option>
+                            <option value="streetwear">Streetwear</option>
+                            <option value="vintage">Vintage</option>
+                            <option value="minimalist">Minimalist</option>
+                            <option value="bohemian">Bohemian</option>
+                            <option value="athletic">Athletic</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <label for="budget">Budget Range</label>
+                        <select id="budget">
+                            <option value="low">$ - Budget Friendly</option>
+                            <option value="medium">$$ - Moderate</option>
+                            <option value="high">$$$ - Premium</option>
+                            <option value="luxury">$$$$ - Luxury</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="input-group">
+                    <label for="occasion">Occasion</label>
+                    <input type="text" id="occasion" placeholder="e.g., Wedding, Job Interview, Date Night">
+                </div>
+                <div class="input-group">
+                    <label for="color-preference">Color Preferences</label>
+                    <input type="text" id="color-preference" placeholder="e.g., Earth tones, Pastels, Monochrome">
+                </div>
+                <div class="input-group mood-input">
+                    <label for="mood">&#129504; Describe Your Mood (NLP Analysis)</label>
+                    <span class="mood-icon">&#128173;</span>
+                    <input type="text" id="mood" placeholder="e.g., feeling bold and adventurous, cozy and relaxed...">
+                </div>
+                <div class="input-group">
+                    <label>Upload Inspiration Image (Optional)</label>
+                    <div class="file-upload">
+                        <input type="file" id="image-upload" accept="image/*">
+                        <label for="image-upload" class="file-upload-label">
+                            &#128193; Click to upload or drag and drop<br><small>JPG, PNG up to 10MB</small>
+                        </label>
+                    </div>
+                    <div id="image-preview" class="image-preview"></div>
+                </div>
+                <div class="input-group">
+                    <label for="additional-notes">Additional Notes</label>
+                    <textarea id="additional-notes" placeholder="Any specific requirements or preferences..."></textarea>
+                </div>
+                <button class="btn" onclick="getRecommendations()" id="rec-btn">&#10024; Get AI Recommendations</button>
+            </div>
+
+            <div class="card">
+                <h2 class="card-title">&#128087; Your Personalized Recommendations</h2>
+                <div id="action-buttons" style="display:none;" class="btn-row">
+                    <button class="btn-outline" onclick="downloadRecommendations()">&#128229; Download</button>
+                    <button class="btn-outline" onclick="copyRecommendations()">&#128203; Copy</button>
+                </div>
+                <div id="recommendations" class="recommendations">
+                    <div class="recommendation-card">
+                        <p class="recommendation-text">
+                            Welcome to StyleSense! Fill in your style preferences and click "Get AI Recommendations" to receive personalized fashion advice.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="trend-modal">
+        <div class="modal">
+            <div class="modal-header">
+                <h2>&#128200; Fashion Trends 2025-2026</h2>
+                <button class="modal-close" onclick="closeTrendModal()">&times;</button>
+            </div>
+            <div id="trend-content"><div class="loading"><div class="spinner"></div><p>Loading trends...</p></div></div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="history-modal">
+        <div class="modal">
+            <div class="modal-header">
+                <h2>&#128220; Recommendation History</h2>
+                <button class="modal-close" onclick="closeHistoryModal()">&times;</button>
+            </div>
+            <div id="history-content"></div>
+        </div>
+    </div>
+
+    <script>
+        let uploadedImage = null;
+        let lastRecommendationData = null;
+
+        // Theme
+        function toggleTheme() {
+            const html = document.documentElement;
+            const current = html.getAttribute('data-theme');
+            const next = current === 'dark' ? 'light' : 'dark';
+            html.setAttribute('data-theme', next);
+            document.getElementById('theme-btn').innerHTML = next === 'dark' ? '&#9728;&#65039;' : '&#127769;';
+            localStorage.setItem('ss-theme', next);
+        }
+        (function() {
+            const saved = localStorage.getItem('ss-theme');
+            if (saved) {
+                document.documentElement.setAttribute('data-theme', saved);
+                if (saved === 'dark') document.getElementById('theme-btn').innerHTML = '&#9728;&#65039;';
+            }
+        })();
+
+        // API Key
+        fetch('/api/check-key').then(function(r){return r.json()}).then(function(data){
+            if(data.has_key){
+                var s=document.getElementById('api-key-section');
+                s.classList.add('success');
+                s.innerHTML='<label style="color:#333">&#9989; Gemini API Key configured.</label>';
+            }
+        });
+        fetch('/api/check-hf-key').then(function(r){return r.json()}).then(function(data){
+            if(data.has_key){
+                var s=document.getElementById('hf-api-key-section');
+                s.classList.add('success');
+                s.innerHTML='<label style="color:#333">&#9989; Hugging Face Token configured.</label>';
+            }
+        });
+
+        function saveApiKey(){
+            var key=document.getElementById('api-key-input').value.trim();
+            if(!key){alert('Please enter a valid API key');return;}
+            fetch('/api/set-key',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({key:key})})
+            .then(function(r){return r.json()}).then(function(data){
+                if(data.success){
+                    var s=document.getElementById('api-key-section');
+                    s.classList.add('success');
+                    s.innerHTML='<label style="color:#333">&#9989; Gemini API Key saved!</label>';
+                } else { alert('Failed: '+(data.error||'Unknown error')); }
+            });
+        }
+
+        function saveHfApiKey(){
+            var key=document.getElementById('hf-api-key-input').value.trim();
+            if(!key){alert('Please enter a valid Hugging Face token');return;}
+            
+            // Show loading state
+            var btn = document.querySelector('#hf-api-key-section button');
+            var originalText = btn.innerText;
+            btn.innerText = 'Verifying...';
+            btn.disabled = true;
+
+            fetch('/api/set-hf-key',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({hf_key:key})})
+            .then(function(r){return r.json()}).then(function(data){
+                if(data.success){
+                    var s=document.getElementById('hf-api-key-section');
+                    s.classList.add('success');
+                    s.innerHTML='<label style="color:#333">&#9989; Hugging Face Token saved!</label>';
+                } else { 
+                    alert('Failed: '+(data.error||'Unknown error')); 
+                    btn.innerText = originalText;
+                    btn.disabled = false;
+                }
+            });
+        }
+
+        // Image Upload
+        document.getElementById('image-upload').addEventListener('change',function(e){
+            var file=e.target.files[0];
+            if(file){
+                var reader=new FileReader();
+                reader.onload=function(ev){
+                    uploadedImage=ev.target.result;
+                    document.getElementById('image-preview').innerHTML='<img src="'+uploadedImage+'" alt="Uploaded">';
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        // Get Recommendations
+        async function getRecommendations(){
+            var formData=new FormData();
+            formData.append('style',document.getElementById('style-preference').value);
+            formData.append('occasion',document.getElementById('occasion').value);
+            formData.append('colors',document.getElementById('color-preference').value);
+            formData.append('budget',document.getElementById('budget').value);
+            formData.append('notes',document.getElementById('additional-notes').value);
+            formData.append('gender',document.getElementById('gender').value);
+            formData.append('body_type',document.getElementById('body-type').value);
+            formData.append('mood',document.getElementById('mood').value);
+            if(uploadedImage) formData.append('image',uploadedImage);
+
+            var rd=document.getElementById('recommendations');
+            rd.innerHTML='<div class="loading"><div class="spinner"></div><p>AI is crafting your personalized recommendations...</p></div>';
+            document.getElementById('action-buttons').style.display='none';
+
+            try{
+                var resp=await fetch('/api/recommendations',{method:'POST',body:formData});
+                var data=await resp.json();
+                if(data.error){rd.innerHTML='<div class="recommendation-card"><p class="recommendation-text">&#9888;&#65039; '+data.error+'</p></div>';return;}
+                lastRecommendationData=data;
+                displayRecommendations(data);
+                document.getElementById('action-buttons').style.display='flex';
+                saveToHistory(data);
+            }catch(error){
+                rd.innerHTML='<div class="recommendation-card"><p class="recommendation-text">Error getting recommendations. Please try again.</p></div>';
+            }
+        }
+
+        function displayRecommendations(data){
+            var rd=document.getElementById('recommendations');
+            var html='';
+            var sections=[
+                ['mood_analysis','&#129504; Mood Analysis'],
+                ['outfit_recommendations','&#127919; Outfit Recommendations'],
+                ['styling_tips','&#128161; Styling Tips'],
+                ['color_analysis','&#127912; Color Analysis'],
+                ['trends','&#128200; Current Trends'],
+                ['shopping_suggestions','&#128717;&#65039; Shopping Suggestions']
+            ];
+            if(data.visual_prompt){
+                html += '<div class="recommendation-card">';
+                html += '<h3 class="recommendation-title">&#128248; Visual Representation</h3>';
+                html += '<div id="visual-loading" class="image-loading-placeholder"><div class="spinner"></div><p>Generating your visual style with Hugging Face...</p></div>';
+                html += '<img id="generated-image" class="recommendation-image" style="display:none;" onerror="this.src=\'https://via.placeholder.com/1024x1024?text=Image+Generation+Error\'">';
+                html += '<p id="image-error" style="color:#e74c3c; display:none;"></p>';
+                html += '</div>';
+            }
+
+            for(var i=0;i<sections.length;i++){
+                var key=sections[i][0], title=sections[i][1];
+                if(data[key]){
+                    html+='<div class="recommendation-card"><h3 class="recommendation-title">'+title+'</h3><p class="recommendation-text">'+data[key]+'</p>';
+                    if(key==='trends'&&data.trend_tags&&data.trend_tags.length>0){
+                        html+='<div class="trend-tags">';
+                        for(var j=0;j<data.trend_tags.length;j++) html+='<span class="tag">'+data.trend_tags[j]+'</span>';
+                        html+='</div>';
+                    }
+                    html+='</div>';
+                }
+            }
+            if(!html) html='<div class="recommendation-card"><p class="recommendation-text">No recommendations returned. Please try again.</p></div>';
+            rd.innerHTML=html;
+
+            // Fetch image if prompt exists
+            if(data.visual_prompt){
+                fetch('/api/generate-image', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ prompt: data.visual_prompt })
+                })
+                .then(r => r.json())
+                .then(imgData => {
+                    document.getElementById('visual-loading').style.display = 'none';
+                    if (imgData.error) {
+                        var errEl = document.getElementById('image-error');
+                        errEl.innerText = '\u26A0\uFE0F ' + imgData.error;
+                        errEl.style.display = 'block';
+                    } else if (imgData.image) {
+                        var imgEl = document.getElementById('generated-image');
+                        imgEl.src = 'data:image/jpeg;base64,' + imgData.image;
+                        imgEl.style.display = 'block';
+                    }
+                })
+                .catch(e => {
+                    document.getElementById('visual-loading').style.display = 'none';
+                    var errEl = document.getElementById('image-error');
+                    errEl.innerText = '\u26A0\uFE0F Failed to connect for image generation.';
+                    errEl.style.display = 'block';
+                });
+            }
+        }
+
+        // History
+        function saveToHistory(data){
+            var history=JSON.parse(localStorage.getItem('ss-history')||'[]');
+            var entry={
+                date:new Date().toLocaleString(),
+                style:document.getElementById('style-preference').value,
+                mood:document.getElementById('mood').value,
+                occasion:document.getElementById('occasion').value,
+                data:data
+            };
+            history.unshift(entry);
+            if(history.length>20) history=history.slice(0,20);
+            localStorage.setItem('ss-history',JSON.stringify(history));
+        }
+        function showHistory(){
+            var history=JSON.parse(localStorage.getItem('ss-history')||'[]');
+            var hc=document.getElementById('history-content');
+            if(history.length===0){
+                hc.innerHTML='<div class="history-empty">No history yet. Get some recommendations first!</div>';
+            } else {
+                var html='';
+                for(var i=0;i<history.length;i++){
+                    var h=history[i];
+                    html+='<div class="history-item" onclick="loadHistory('+i+')">';
+                    html+='<div class="h-title">'+h.style+' style'+(h.occasion?' for '+h.occasion:'')+'</div>';
+                    html+='<div class="h-date">'+h.date+'</div>';
+                    html+='<div class="h-tags">';
+                    if(h.mood) html+='<span class="h-tag">&#129504; '+h.mood+'</span>';
+                    html+='<span class="h-tag">'+h.style+'</span></div></div>';
+                }
+                html+='<div style="margin-top:15px;text-align:center"><button class="btn-outline" onclick="clearHistory()">&#128465;&#65039; Clear History</button></div>';
+                hc.innerHTML=html;
+            }
+            document.getElementById('history-modal').classList.add('active');
+        }
+        function loadHistory(i){
+            var history=JSON.parse(localStorage.getItem('ss-history')||'[]');
+            if(history[i]){
+                lastRecommendationData=history[i].data;
+                displayRecommendations(history[i].data);
+                document.getElementById('action-buttons').style.display='flex';
+                closeHistoryModal();
+            }
+        }
+        function clearHistory(){
+            localStorage.removeItem('ss-history');
+            document.getElementById('history-content').innerHTML='<div class="history-empty">History cleared!</div>';
+        }
+        function closeHistoryModal(){ document.getElementById('history-modal').classList.remove('active'); }
+
+        // Trends
+        function showTrends(){
+            document.getElementById('trend-modal').classList.add('active');
+            document.getElementById('trend-content').innerHTML='<div class="loading"><div class="spinner"></div><p>AI is analyzing current trends...</p></div>';
+            fetch('/api/trends').then(function(r){return r.json()}).then(function(data){
+                if(data.error){
+                    document.getElementById('trend-content').innerHTML='<div class="recommendation-card"><p class="recommendation-text">&#9888;&#65039; '+data.error+'</p></div>';
+                    return;
+                }
+                var html='';
+                if(data['2025_trends']){
+                    html+='<div class="recommendation-card"><h3 class="recommendation-title">&#128293; Top Trends</h3><div class="trend-tags">';
+                    for(var i=0;i<data['2025_trends'].length;i++) html+='<span class="tag">'+data['2025_trends'][i]+'</span>';
+                    html+='</div></div>';
+                }
+                if(data.seasonal){
+                    var seasons=[['spring','&#127800; Spring'],['summer','&#9728;&#65039; Summer'],['fall','&#127810; Fall'],['winter','&#10052;&#65039; Winter']];
+                    for(var i=0;i<seasons.length;i++){
+                        var s=seasons[i][0], label=seasons[i][1];
+                        if(data.seasonal[s]) html+='<div class="recommendation-card"><h3 class="recommendation-title">'+label+'</h3><p class="recommendation-text">'+data.seasonal[s]+'</p></div>';
+                    }
+                }
+                document.getElementById('trend-content').innerHTML=html||'<p>No trends data available.</p>';
+            }).catch(function(){
+                document.getElementById('trend-content').innerHTML='<div class="recommendation-card"><p class="recommendation-text">Failed to load trends.</p></div>';
+            });
+        }
+        function closeTrendModal(){ document.getElementById('trend-modal').classList.remove('active'); }
+
+        // Download and Copy
+        function downloadRecommendations(){
+            if(!lastRecommendationData) return;
+            var d=lastRecommendationData;
+            var text='StyleSense - AI Fashion Recommendations\n';
+            text+='Generated: '+new Date().toLocaleString()+'\n';
+            text+='==================================================\n\n';
+            if(d.mood_analysis) text+='MOOD ANALYSIS\n'+d.mood_analysis+'\n\n';
+            if(d.outfit_recommendations) text+='OUTFIT RECOMMENDATIONS\n'+d.outfit_recommendations+'\n\n';
+            if(d.styling_tips) text+='STYLING TIPS\n'+d.styling_tips+'\n\n';
+            if(d.color_analysis) text+='COLOR ANALYSIS\n'+d.color_analysis+'\n\n';
+            if(d.trends) text+='TRENDS\n'+d.trends+'\n\n';
+            if(d.shopping_suggestions) text+='SHOPPING SUGGESTIONS\n'+d.shopping_suggestions+'\n\n';
+            if(d.visual_prompt) text+='VISUAL PROMPT\n'+d.visual_prompt+'\n\n';
+            var blob=new Blob([text],{type:'text/plain'});
+            var a=document.createElement('a');
+            a.href=URL.createObjectURL(blob);
+            a.download='stylesense_recommendations.txt';
+            a.click();
+            showToast('Downloaded!');
+        }
+        function copyRecommendations(){
+            if(!lastRecommendationData) return;
+            var d=lastRecommendationData;
+            var text='';
+            if(d.mood_analysis) text+='Mood Analysis: '+d.mood_analysis+'\n\n';
+            if(d.outfit_recommendations) text+='Outfit: '+d.outfit_recommendations+'\n\n';
+            if(d.styling_tips) text+='Tips: '+d.styling_tips+'\n\n';
+            if(d.color_analysis) text+='Colors: '+d.color_analysis+'\n\n';
+            if(d.trends) text+='Trends: '+d.trends+'\n\n';
+            if(d.shopping_suggestions) text+='Shopping: '+d.shopping_suggestions+'\n\n';
+            if(d.visual_prompt) text+='Visual Prompt: '+d.visual_prompt;
+            navigator.clipboard.writeText(text).then(function(){showToast('Copied to clipboard!')});
+        }
+        function showToast(msg){
+            var t=document.createElement('div');
+            t.className='toast'; t.textContent=msg;
+            document.body.appendChild(t);
+            setTimeout(function(){t.remove()},2500);
+        }
+
+        // Close modals on overlay click
+        var modals=document.querySelectorAll('.modal-overlay');
+        for(var i=0;i<modals.length;i++){
+            modals[i].addEventListener('click',function(e){
+                if(e.target===this) this.classList.remove('active');
+            });
+        }
+    </script>
+</body>
+</html>
